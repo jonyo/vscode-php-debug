@@ -279,8 +279,12 @@ class PhpDebugSession extends vscode.DebugSession {
                         })
                         connection.on('error', disposeConnection)
                         connection.on('close', disposeConnection)
-                        connection.on('before-execute-command', () => {
-                            // It is about to start executing PHP code
+                        connection.on('before-execute-command', (uid: number) => {
+                            if (uid < 1) {
+                                // Do not send signal for the first execute command, it seems to be the one time
+                                // that the debugger knows that code is being executed without telling it
+                                return;
+                            }
                             this.sendEvent(new vscode.ContinuedEvent(connection.id))
                         })
                         await connection.waitForInitPacket()
