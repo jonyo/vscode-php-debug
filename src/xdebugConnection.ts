@@ -587,6 +587,14 @@ export class Connection extends DbgpConnection {
      */
     private _commandQueue: Command[] = []
 
+    private _commandUid: number = -1
+    /**
+     * The most recently started command's index.  Value of -1 means no commands have been started yet.
+     */
+    public get lastCommandUid(): number {
+        return this._commandUid
+    }
+
     private _pendingExecuteCommand = false
     /**
      * Whether a command was started that executes PHP, which means the connection will be blocked from
@@ -679,6 +687,7 @@ export class Connection extends DbgpConnection {
         const data = iconv.encode(commandString, ENCODING)
         this._pendingCommands.set(transactionId, command)
         this._pendingExecuteCommand = command.isExecuteCommand
+        this._commandUid++
         if (this._pendingExecuteCommand) {
             // Since PHP execution commands block anything on the connection until it is
             // done executing, emit that the connection is about to go into such a locked state
