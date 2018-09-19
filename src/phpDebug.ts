@@ -283,9 +283,19 @@ class PhpDebugSession extends vscode.DebugSession {
                             if (uid < 1) {
                                 // Do not send signal for the first execute command, it seems to be the one time
                                 // that the debugger knows that code is being executed without telling it
-                                return;
+                                return
                             }
-                            this.sendEvent(new vscode.ContinuedEvent(connection.id))
+                            // Wait for a little bit then see if it is still hung up executing the exact same command,
+                            // and the connection is still active. If so let xdebug know code is now running
+                            setTimeout(() => {
+                                if (
+                                    connection.isPendingExecuteCommand &&
+                                    connection.lastExecuteCommandUid === uid &&
+                                    this._connections.has(connection.id)
+                                ) {
+                                    this.sendEvent(new vscode.ContinuedEvent(connection.id))
+                                }
+                            }, 300)
                         })
                         await connection.waitForInitPacket()
 
